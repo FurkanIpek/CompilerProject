@@ -36,7 +36,7 @@ tNEWLINE \n
 tIDENT [_a-zA-Z][_a-zA-Z0-9]*
 
 %% 
-{tINT} { lexDebug("int\n"); yylval.str = strdup(yytext); return tINT; }
+{tINT} { lexDebug("int\n"); yylval.type.var = strdup(yytext); return tINT; }
 {tTRUE} { lexDebug("true\n"); return tTRUE; }
 {tFALSE} { lexDebug("false\n"); return tFALSE; }
 {tIF} { lexDebug("if\n"); return tIF; }
@@ -58,7 +58,7 @@ tIDENT [_a-zA-Z][_a-zA-Z0-9]*
 {tSMALLER} { lexDebug("smaller\n"); return tSMALLER; }
 {tIDENT} {
 	lexDebug("ident\n");
-	yylval.str = strdup(yytext);
+	yylval.type.var = strdup(yytext);
 	return tIDENT;
 }
 {tNEWLINE} { ++yylineno; }

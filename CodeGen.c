@@ -1,5 +1,14 @@
 #include "CodeGen.h"
 
+#define PRINT // comment out before submitting
+
+void debugInfo(char* str)
+{
+#ifdef PRINT
+	printf("Debug: %s\n", str);
+#endif
+}
+
 void usage()
 {
 	printf("\n Usage: ./parser input_file output_file \n\n");
@@ -27,30 +36,38 @@ void loadFile(t_compiler* compiler)
 	compiler->fout = fopen(compiler->fout_name, "w");
 	
 	yyset_in(compiler->fin);
-	yyset_out(compiler->fout);
 }
 
 int parse(t_compiler* compiler)
 {
-	printf("Parsing..\n");
- 
-    if (yyparse()) {
-        // error parsing
+    if (yyparse())
         return 0;
-    }
 
 	return 1;
 }
 
-int genTemp()
+void genTemp(char* var)
 {
 	static int n = 0;
-
-	return n++;
+	char temp[10];
+	snprintf(temp, 10, "%s%i", "temp", n++);
+	strcpy(var, temp);
 }
 
-void writeC(t_compiler* compiler, char* str)
+void genLabel(char* label)
 {
-	printf("Debug: %s \n", str);
-	fprintf(compiler->fout, "%s", str);
+	static int n = 0;
+	char temp[10];
+	snprintf(temp, 10, "%s%i", "label", n++);
+	strcpy(label, temp);
 }
+
+void writeC(t_compiler* compiler, char* str, int newline)
+{
+	debugInfo(str);
+	if (newline == 0)
+		fprintf(compiler->fout, "%s", str);
+	else
+		fprintf(compiler->fout, "%s\n", str);
+}
+

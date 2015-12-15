@@ -6,20 +6,26 @@
 int yywrap() { return 0; }
 
 extern t_compiler* compiler;
-char line [256];
+char line [256]; // generated lines will be copied into this array
+char label [10]; // new labels will be copied into this array
+char var [10]; // new temp var.s will be copied into this array
 %}
 
 %output  "Parser.c"
 %defines "Parser.h"
 
 %union {
-	char* str;
+	struct {
+		char* var;
+		char* code;	
+	}type;
+	char* code;
 }
 
-%token <str> tIDENT
-%token <str> tINT
-%token tTRUE tFALSE tIF tTHEN tELSE tWHILE tAND tBEGIN tEND tENDPROC
-tPROC tMAIN tENDMAIN tPLUS tMULT tSEMI tISEQUAL tASSIGN tSMALLER tNEWLINE
+%token <type> tIDENT
+%token <type> tINT
+%token tTRUE tFALSE tIF tTHEN tELSE tWHILE tBEGIN tEND tENDPROC tAND
+tPLUS tMULT tPROC tMAIN tENDMAIN tSEMI tASSIGN tNEWLINE tSMALLER tISEQUAL
 
 %left tAND tISEQUAL tSMALLER tPLUS tMULT
 
@@ -35,10 +41,10 @@ Proc
 	: tPROC tIDENT '(' Params ')' StmtLst tENDPROC {}
 	;
 
-Params /* TODO */
+Params
 	: Params ',' tIDENT {}
-	|  tIDENT { writeC(compiler, "MOV tmp, R0\n"); } 
-	|  {}
+	| tIDENT {} 
+	| {}
 	;
 
 Main
@@ -64,8 +70,8 @@ Stmt
 AsgnStmt
 	: tIDENT tASSIGN Expr tSEMI 
 { 
-	snprintf(line, 256, "%s%s%s", $<str>1, " = ", $<str>3);
-	writeC(compiler, line);
+	snprintf(line, 256, "%s%s%s", $<type>1.var, " = ", $<type>3.var);
+	writeC(compiler, line, 1);
 }
 	;
 
@@ -78,34 +84,46 @@ WhlStmt
 	;
 
 CallStmt
-	: tIDENT '(' ExprList ')' tSEMI {}
+	: tIDENT '(' ExprList ')' tSEMI
+{
+	snprintf(line, 256, "%s%s", "call ", $<type>1.var);
+	writeC(compiler, line, 1);
+}
 	;
 
-ExprList
-	: Expr ExprList2 {}
-	|  {}
-	;
-
-ExprList2
-	: ',' Expr ExprList2 {}
-	|  {}
+ExprList /* TODO is removal of ExprList2 correct */
+	: ExprList ',' Expr {}
+	| Expr { writeC(compiler, $<type>1.code, 1); }
+	| {}
 	;
 
 Expr
-	: tINT {}
-	| tFALSE {}
-	| tTRUE {}
-	| tIDENT {}
-	| '(' Expr ')' {}
-	| Expr Op Expr {}
+	: tINT { $<type>$.var = $<type>1.var; $<type>$.code = ""; }
+	| tFALSE { $<type>$.var = "true"; $<type>$.code = ""; }
+	| tTRUE { $<type>$.var = "false"; $<type>$.code = ""; }
+	| tIDENT { $<type>$.var = $<type>1.var; $<type>$.code = ""; }
+	| '(' Expr ')' { $<type>$.var = $<type>2.var; $<type>$.code = $<type>2.code; }
+	| Expr Op Expr
+{
+	char codex [256];
+	$<type>$.var = (char*) malloc(sizeof(char) * 10);
+	$<type>$.code = (char*) malloc(sizeof(char) * 256);
+
+	genTemp(var);
+	strcpy($<type>$.var, var);
+	snprintf(line, 256, "%s%s%s%s%s", $<type>$.var, " = ", $<type>1.var, $<code>2, $<type>3.var);
+	writeC(compiler, line, 1);
+	snprintf(codex, 256, "%s%s%s", $<type>1.code, $<type>3.code, line);
+	strcpy($<type>$.code, codex);
+}
 	;
 
 Op
-	: tPLUS {}
-	| tMULT {}
-	| tSMALLER {}
-	| tISEQUAL {}
-	| tAND {}
+	: tPLUS { $<code>$ = " + "; }
+	| tMULT { $<code>$ = " * "; }
+	| tSMALLER { $<code>$ = " < "; }
+	| tISEQUAL { $<code>$ = " == "; }
+	| tAND { $<code>$ = " and "; }
 	;
 %%
 
