@@ -17,9 +17,10 @@ char var [10]; // new temp var.s will be copied into this array
 %union {
 	struct {
 		char* var;
-		char* code;	
+		char* code;
 	}type;
-	char* code;
+	char code [256]; // to carry on the code with non-terminals post-fixed with "list"
+	void* node; // evaluated as Node* for tree in CodeGen
 }
 
 %token <type> tIDENT
@@ -42,8 +43,12 @@ Proc
 	;
 
 Params
-	: Params ',' tIDENT {}
-	| tIDENT {} 
+	: tIDENT Params2 {}
+	| {}
+	;
+
+Params2
+	: ',' tIDENT Params2 {}
 	| {}
 	;
 
@@ -76,54 +81,47 @@ AsgnStmt
 	;
 
 IfStmt
-	: tIF '(' Expr ')' tTHEN StmtBlk tELSE StmtBlk {}
-	;
-
-WhlStmt
-	: tWHILE '(' Expr ')' StmtBlk {}
-	;
-
-CallStmt
-	: tIDENT '(' ExprList ')' tSEMI
-{
-	snprintf(line, 256, "%s%s", "call ", $<type>1.var);
+	: tIF '(' Expr ')' tTHEN StmtBlk tELSE StmtBlk
+{// if in altına stmtblk1.label sonra code - sonra else için aynısı
+// then in sonuna after label!
+	snprintf(line, 256, "%s%s%s%s%s%s", "if ", "( ", $<type>3.code, " )", " GOTO ", $<type>3.var);
 	writeC(compiler, line, 1);
 }
 	;
 
-ExprList /* TODO is removal of ExprList2 correct */
-	: ExprList ',' Expr {}
-	| Expr { writeC(compiler, $<type>1.code, 1); }
+WhlStmt
+	: tWHILE '(' Expr ')' StmtBlk
+{
+	char begin [10];	genLabel(begin);
+	char after [10];	genLabel(after);
+}
+	;
+
+CallStmt
+	: tIDENT '(' ExprList ')' tSEMI { makeProcedure(); }
+	;
+
+ExprList
+	: Expr ExprList2 {}
+	| {}
+	;
+
+ExprList2
+	: ',' Expr ExprList2 { exprList($<code>$, $<node>1); }
 	| {}
 	;
 
 Expr
-	: tINT { $<type>$.var = $<type>1.var; $<type>$.code = ""; }
-	| tFALSE { $<type>$.var = "true"; $<type>$.code = ""; }
-	| tTRUE { $<type>$.var = "false"; $<type>$.code = ""; }
-	| tIDENT { $<type>$.var = $<type>1.var; $<type>$.code = ""; }
-	| '(' Expr ')' { $<type>$.var = $<type>2.var; $<type>$.code = $<type>2.code; }
-	| Expr Op Expr
-{
-	char codex [256];
-	$<type>$.var = (char*) malloc(sizeof(char) * 10);
-	$<type>$.code = (char*) malloc(sizeof(char) * 256);
-
-	genTemp(var);
-	strcpy($<type>$.var, var);
-	snprintf(line, 256, "%s%s%s%s%s", $<type>$.var, " = ", $<type>1.var, $<code>2, $<type>3.var);
-	writeC(compiler, line, 1);
-	snprintf(codex, 256, "%s%s%s", $<type>1.code, $<type>3.code, line);
-	strcpy($<type>$.code, codex);
-}
-	;
-
-Op
-	: tPLUS { $<code>$ = " + "; }
-	| tMULT { $<code>$ = " * "; }
-	| tSMALLER { $<code>$ = " < "; }
-	| tISEQUAL { $<code>$ = " == "; }
-	| tAND { $<code>$ = " and "; }
+	: tINT { $<node>$ = makeLeaf($<type>1.var, "", ""); }
+	| tFALSE { $<node>$ = makeLeaf("true", "", ""); }
+	| tTRUE { $<node>$ = makeLeaf("false", "", ""); }
+	| tIDENT { $<node>$ = makeLeaf($<type>1.var, "", ""); }
+	| '(' Expr ')' { $<node>$ = $<node>2; }
+	| Expr tPLUS Expr { expression("+", $<node>$, $<node>1, $<node>3); }
+	| Expr tMULT Expr { expression("*", $<node>$, $<node>1, $<node>3); }
+	| Expr tSMALLER Expr { expression("<", $<node>$, $<node>1, $<node>3); }
+	| Expr tISEQUAL Expr { expression("==", $<node>$, $<node>1, $<node>3); }
+	| Expr tAND Expr { expression("and", $<node>$, $<node>1, $<node>3); }
 	;
 %%
 

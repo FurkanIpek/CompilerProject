@@ -2,6 +2,11 @@
 
 t_compiler* compiler;
 
+void usage()
+{
+	printf("\n\tUsage: ./pl4 input_file output_file\n\n");
+}
+
 int main(int argc, char** argv)
 {
 	char* input = "input.pl4", * output = "output.tac";
@@ -21,7 +26,8 @@ int main(int argc, char** argv)
 	if (parse(compiler) == 1)
 		printf("Parsing finished succesfully.\n");
 
-	freeCompiler(compiler);
+	freeCodeGenerator(compiler);
 		
 	return 0;
 }
+

@@ -1,4 +1,4 @@
-FILES	= Lexer.c Parser.c CodeGen.c main.c
+FILES	= Lexer.c Parser.c CodeGen.c Tree.c Logger.c List.c main.c
 CC	= gcc
 CFLAGS	= 
 

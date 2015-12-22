@@ -3,6 +3,8 @@
 
 #include "Parser.h"
 #include "Lexer.h"
+#include "Tree.h"
+#include "Logger.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -14,13 +16,16 @@ typedef struct t_compiler {
 } t_compiler;
 
 /* UTILITIES */
-void usage();
 void genTemp(char* var);
 void genLabel(char* label);
 
 /* LIBRARY */
 t_compiler* initializeCodeGenerator(char* fin, char* fout);
-void freeCompiler(t_compiler* compiler);
+void freeCodeGenerator(t_compiler* compiler);
+
+void expression(char* operator, Node* base, Node* opr1, Node* opr2);
+void callStatement(char* procName);
+void exprList(char* str, Node* node);
 
 void loadFile(t_compiler* compiler);
 int parse(t_compiler* compiler);

@@ -1,0 +1,12 @@
+proc myProc (param1, param2)
+if (furkan == true) then begin 
+param1 = 5 + 6 + 7;
+end
+else begin
+param1 = 5 + 4;
+end
+endproc
+
+main
+myProc(param, maram);
+endmain

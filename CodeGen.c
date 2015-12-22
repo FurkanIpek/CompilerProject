@@ -1,25 +1,6 @@
 #include "CodeGen.h"
 
-#define PRINT // comment out before submitting
-
-void debugInfo(char* str)
-{
-#ifdef PRINT
-	printf("Debug: %s\n", str);
-#endif
-}
-
-void usage()
-{
-	printf("\n Usage: ./parser input_file output_file \n\n");
-}
-
-void freeCompiler(t_compiler* compiler)
-{
-	fclose(compiler->fin);
-	fclose(compiler->fout);
-	free(compiler);
-}
+const int log_id = 1;
 
 t_compiler* initializeCodeGenerator(char* fin, char* fout)
 {
@@ -28,6 +9,13 @@ t_compiler* initializeCodeGenerator(char* fin, char* fout)
 	ptr->fout_name = fout;
 
 	return ptr;
+}
+
+void freeCodeGenerator(t_compiler* compiler)
+{
+	fclose(compiler->fin);
+	fclose(compiler->fout);
+	free(compiler);
 }
 
 void loadFile(t_compiler* compiler)
@@ -62,9 +50,29 @@ void genLabel(char* label)
 	strcpy(label, temp);
 }
 
+void expression(char* operator, Node* base, Node* opr1, Node* opr2)
+{
+	char temp[10]; genTemp(temp);
+
+	base = makeNode(strdup(temp), "", "", opr1, opr2);
+	base->code = (char*) malloc(sizeof(char) * 256);
+
+	snprintf(base->code, 256, "%s%s%s%s%s%s%s", opr1->code, opr2->code, base->var, " = ", opr1->var, operator, opr2->var);
+}
+
+void callStatement(char* procName)
+{
+	// TODO
+}
+
+void exprList(char* str, Node* node)
+{
+	
+}
+
 void writeC(t_compiler* compiler, char* str, int newline)
 {
-	debugInfo(str);
+	debugInfo(str, log_id);
 	if (newline == 0)
 		fprintf(compiler->fout, "%s", str);
 	else

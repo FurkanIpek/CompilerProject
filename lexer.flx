@@ -1,13 +1,5 @@
 %{
 #include "Parser.h"
-#include <stdio.h>
-
-void lexDebug(char* str)
-{
-#ifdef PRINT
-	printf("%s", str);
-#endif
-}
 %}
 
 %option outfile="Lexer.c" header-file="Lexer.h"
@@ -36,37 +28,35 @@ tNEWLINE \n
 tIDENT [_a-zA-Z][_a-zA-Z0-9]*
 
 %% 
-{tINT} { lexDebug("int\n"); yylval.type.var = strdup(yytext); return tINT; }
-{tTRUE} { lexDebug("true\n"); return tTRUE; }
-{tFALSE} { lexDebug("false\n"); return tFALSE; }
-{tIF} { lexDebug("if\n"); return tIF; }
-{tTHEN} { lexDebug("then\n"); return tTHEN; }
-{tELSE} { lexDebug("else\n"); return tELSE; }
-{tWHILE} { lexDebug("while\n"); return tWHILE; }
-{tAND} { lexDebug("and\n"); return tAND; }
-{tBEGIN} { lexDebug("begin\n"); return tBEGIN; }
-{tEND} { lexDebug("end\n"); return tEND; }
-{tPROC} { lexDebug("proc\n"); return tPROC; }
-{tENDPROC} { lexDebug("endproc\n"); return tENDPROC; }
-{tMAIN} { lexDebug("main\n"); return tMAIN; }
-{tENDMAIN} { lexDebug("endmain\n"); return tENDMAIN; }
-{tPLUS} { lexDebug("puls\n"); return tPLUS; }
-{tMULT} { lexDebug("mult\n"); return tMULT; }
-{tSEMI} { lexDebug("semi\n"); return tSEMI; }
-{tISEQUAL} { lexDebug("isequal\n"); return tISEQUAL; } 
-{tASSIGN} { lexDebug("assign\n"); return tASSIGN; } 
-{tSMALLER} { lexDebug("smaller\n"); return tSMALLER; }
-{tIDENT} {
-	lexDebug("ident\n");
-	yylval.type.var = strdup(yytext);
-	return tIDENT;
-}
+{tINT} { yylval.type.var = strdup(yytext); return tINT; }
+{tTRUE} { return tTRUE; }
+{tFALSE} { return tFALSE; }
+{tIF} { return tIF; }
+{tTHEN} { return tTHEN; }
+{tELSE} { return tELSE; }
+{tWHILE} { return tWHILE; }
+{tAND} { return tAND; }
+{tBEGIN} { return tBEGIN; }
+{tEND} { return tEND; }
+{tPROC} { return tPROC; }
+{tENDPROC} { return tENDPROC; }
+{tMAIN} { return tMAIN; }
+{tENDMAIN} { return tENDMAIN; }
+{tPLUS} { return tPLUS; }
+{tMULT} { return tMULT; }
+{tSEMI} { return tSEMI; }
+{tISEQUAL} { return tISEQUAL; } 
+{tASSIGN} { return tASSIGN; } 
+{tSMALLER} { return tSMALLER; }
+{tIDENT} { yylval.type.var = strdup(yytext); return tIDENT; }
 {tNEWLINE} { ++yylineno; }
 [ ]+ 
-. { char damn [2] = {yytext[0] , ' '}; lexDebug(damn); return yytext[0]; } 
+. { return yytext[0]; } 
 %%
 
-int yyerror(const char *msg) {
-    printf("Error:%s\n",msg); return 0;
+int yyerror(const char *msg)
+{
+    printf("Error: %s\n", msg);
+	return 0;
 }
 
