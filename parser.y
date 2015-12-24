@@ -6,122 +6,103 @@
 int yywrap() { return 0; }
 
 extern t_compiler* compiler;
-char line [256]; // generated lines will be copied into this array
-char label [10]; // new labels will be copied into this array
-char var [10]; // new temp var.s will be copied into this array
 %}
 
 %output  "Parser.c"
 %defines "Parser.h"
 
 %union {
-	struct {
-		char* var;
-		char* code;
-	}type;
-	char code [256]; // to carry on the code with non-terminals post-fixed with "list"
+	char* var;
 	void* node; // evaluated as Node* for tree in CodeGen
 }
 
-%token <type> tIDENT
-%token <type> tINT
+%token <var> tIDENT
+%token <var> tINT
 %token tTRUE tFALSE tIF tTHEN tELSE tWHILE tBEGIN tEND tENDPROC tAND
 tPLUS tMULT tPROC tMAIN tENDMAIN tSEMI tASSIGN tNEWLINE tSMALLER tISEQUAL
 
 %left tAND tISEQUAL tSMALLER tPLUS tMULT
 
 %%
-Program: Procedures Main { YYACCEPT; };
+Program: Procedures Main { $<node>$ = makeRoot($<node>1, $<node>2); writeC(compiler, $<node>$); YYACCEPT; }
+	;
 
 Procedures
-	: Procedures Proc {}
-	| {}
+	: Procedures Proc { $<node>$ = makeBranch(t_procList); extendBranch($<node>$, $<node>2, $<node>1); }
+	| { $<node>$ = makeBranch(t_procList); }
 	;
 
 Proc
-	: tPROC tIDENT '(' Params ')' StmtLst tENDPROC {}
+	: tPROC tIDENT '(' Params ')' StmtLst tENDPROC { $<node>$ = genProcedure($<var>2, $<node>4, $<node>6); }
 	;
 
 Params
-	: tIDENT Params2 {}
-	| {}
+	: tIDENT Params2 { $<node>$ = makeBranch(t_paramList); extendBranch($<node>$, genLeaf($<node>1, "", ""), $<node>2); }
+	| { $<node>$ = NULL; }
 	;
 
 Params2
-	: ',' tIDENT Params2 {}
-	| {}
+	: ',' tIDENT Params2 { $<node>$ = makeBranch(t_paramList); extendBranch($<node>$, genLeaf($<node>2, "", ""), $<node>3); }
+	| { $<node>$ = makeBranch(t_paramList); }
 	;
 
 Main
-	: tMAIN StmtLst tENDMAIN {}
+	: tMAIN StmtLst tENDMAIN { $<node>$ = $<node>2; }
 	;
 
 StmtBlk
-	: tBEGIN StmtLst tEND {}
+	: tBEGIN StmtLst tEND { $<node>$ = $<node>2; }
 	;
 
 StmtLst
-	: Stmt StmtLst {}
-	| Stmt {}
+	: Stmt StmtLst { $<node>$ = makeBranch(t_stmtList); extendBranch($<node>$, $<node>1, $<node>2); }
+	| Stmt { $<node>$ = makeBranch(t_stmtList); extendBranch($<node>$, $<node>1, NULL); }
 	;
 
 Stmt
-	: AsgnStmt {}
-	| IfStmt {}
-	| WhlStmt {}
-	| CallStmt {}
+	: AsgnStmt { $<node>$ = $<node>1; }
+	| IfStmt { $<node>$ = $<node>1; }
+	| WhlStmt { $<node>$ = $<node>1; }
+	| CallStmt { $<node>$ = $<node>1; }
 	;
 
-AsgnStmt
-	: tIDENT tASSIGN Expr tSEMI 
-{ 
-	snprintf(line, 256, "%s%s%s", $<type>1.var, " = ", $<type>3.var);
-	writeC(compiler, line, 1);
-}
+AsgnStmt // printf("debug: %i\n", ((Node*)$<node>3)->num_children);
+	: tIDENT tASSIGN Expr tSEMI { $<node>$ = assignStatement($<var>1, $<node>3);}
 	;
 
 IfStmt
-	: tIF '(' Expr ')' tTHEN StmtBlk tELSE StmtBlk
-{// if in altına stmtblk1.label sonra code - sonra else için aynısı
-// then in sonuna after label!
-	snprintf(line, 256, "%s%s%s%s%s%s", "if ", "( ", $<type>3.code, " )", " GOTO ", $<type>3.var);
-	writeC(compiler, line, 1);
-}
+	: tIF '(' Expr ')' tTHEN StmtBlk tELSE StmtBlk { $<node>$ = ifStatement($<node>3, $<node>6, $<node>8); }
 	;
 
 WhlStmt
-	: tWHILE '(' Expr ')' StmtBlk
-{
-	char begin [10];	genLabel(begin);
-	char after [10];	genLabel(after);
-}
+	: tWHILE '(' Expr ')' StmtBlk { $<node>$ = whileStatement($<node>3, $<node>5); }
 	;
 
 CallStmt
-	: tIDENT '(' ExprList ')' tSEMI { makeProcedure(); }
+	: tIDENT '(' ExprList ')' tSEMI { $<node>$ = callStatement($<var>1, $<node>3); }
 	;
 
 ExprList
-	: Expr ExprList2 {}
-	| {}
+	: Expr ExprList2 { $<node>$ = makeBranch(t_exprList); extendBranch($<node>$, $<node>1, $<node>2); }
+	| { $<node>$ = NULL; }
 	;
 
 ExprList2
-	: ',' Expr ExprList2 { exprList($<code>$, $<node>1); }
-	| {}
+	: ',' Expr ExprList2 { $<node>$ = makeBranch(t_exprList); extendBranch($<node>$, $<node>2, $<node>3); }
+	| { $<node>$ = makeBranch(t_exprList); }
 	;
 
 Expr
-	: tINT { $<node>$ = makeLeaf($<type>1.var, "", ""); }
-	| tFALSE { $<node>$ = makeLeaf("true", "", ""); }
-	| tTRUE { $<node>$ = makeLeaf("false", "", ""); }
-	| tIDENT { $<node>$ = makeLeaf($<type>1.var, "", ""); }
+	: tINT { $<node>$ = genLeaf($<var>1, "", ""); }
+	| tFALSE { $<node>$ = genLeaf("true", "", ""); }
+	| tTRUE { $<node>$ = genLeaf("false", "", ""); }
+	| tIDENT { $<node>$ = genLeaf($<var>1, "", ""); }
 	| '(' Expr ')' { $<node>$ = $<node>2; }
-	| Expr tPLUS Expr { expression("+", $<node>$, $<node>1, $<node>3); }
-	| Expr tMULT Expr { expression("*", $<node>$, $<node>1, $<node>3); }
-	| Expr tSMALLER Expr { expression("<", $<node>$, $<node>1, $<node>3); }
-	| Expr tISEQUAL Expr { expression("==", $<node>$, $<node>1, $<node>3); }
-	| Expr tAND Expr { expression("and", $<node>$, $<node>1, $<node>3); }
+	| Expr tPLUS Expr { $<node>$ = expression("+", $<node>1, $<node>3); }
+	| Expr tMULT Expr { $<node>$ = expression("*", $<node>1, $<node>3); }
+	| Expr tSMALLER Expr { $<node>$ = expression("<", $<node>1, $<node>3); }
+	| Expr tISEQUAL Expr { $<node>$ = expression("==", $<node>1, $<node>3); }
+	| Expr tAND Expr { $<node>$ = expression("and", $<node>1, $<node>3); }
 	;
 %%
 

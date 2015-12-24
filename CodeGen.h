@@ -4,7 +4,6 @@
 #include "Parser.h"
 #include "Lexer.h"
 #include "Tree.h"
-#include "Logger.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -23,12 +22,17 @@ void genLabel(char* label);
 t_compiler* initializeCodeGenerator(char* fin, char* fout);
 void freeCodeGenerator(t_compiler* compiler);
 
-void expression(char* operator, Node* base, Node* opr1, Node* opr2);
-void callStatement(char* procName);
-void exprList(char* str, Node* node);
+Node* genLeaf(char* var, char* label, char* code);
+Node* expression(char* operator, Node* opr1, Node* opr2);
+Node* callStatement(char* procName, Node* exprList);
+void extendBranch(Node* branch, Node* statement, Node* bag);
+Node* whileStatement(Node* expr, Node* statements);
+Node* ifStatement(Node* expr, Node* ifBody, Node* elseBody);
+Node* assignStatement(char* var, Node* expr);
+Node* genProcedure(char* procName, Node* params, Node* statements);
 
 void loadFile(t_compiler* compiler);
 int parse(t_compiler* compiler);
-void writeC(t_compiler* compiler, char* str, int newline);
+void writeC(t_compiler* compiler, Node* node);
 
 #endif

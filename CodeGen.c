@@ -1,7 +1,5 @@
 #include "CodeGen.h"
 
-const int log_id = 1;
-
 t_compiler* initializeCodeGenerator(char* fin, char* fout)
 {
 	t_compiler* ptr = (t_compiler*) malloc(sizeof(t_compiler));
@@ -37,7 +35,7 @@ int parse(t_compiler* compiler)
 void genTemp(char* var)
 {
 	static int n = 0;
-	char temp[10];
+	char temp [10];
 	snprintf(temp, 10, "%s%i", "temp", n++);
 	strcpy(var, temp);
 }
@@ -45,37 +43,75 @@ void genTemp(char* var)
 void genLabel(char* label)
 {
 	static int n = 0;
-	char temp[10];
+	char temp [10];
 	snprintf(temp, 10, "%s%i", "label", n++);
 	strcpy(label, temp);
 }
 
-void expression(char* operator, Node* base, Node* opr1, Node* opr2)
+Node* genLeaf(char* var, char* label, char* code)
 {
-	char temp[10]; genTemp(temp);
-
-	base = makeNode(strdup(temp), "", "", opr1, opr2);
-	base->code = (char*) malloc(sizeof(char) * 256);
-
-	snprintf(base->code, 256, "%s%s%s%s%s%s%s", opr1->code, opr2->code, base->var, " = ", opr1->var, operator, opr2->var);
+	return makeLeaf(var, label, code);
 }
 
-void callStatement(char* procName)
+Node* expression(char* operator, Node* opr1, Node* opr2)
 {
-	// TODO
-}
+	char temp [10];
+	char code [256];
 
-void exprList(char* str, Node* node)
-{
+	genTemp(temp);
 	
+	//if (strcmp(opr1->code, "") != 0) strcat(opr1->code, "\n")
+	if (opr2->code != "") strcat(opr2->code, "\n");
+
+	snprintf(code, 256, "%s%s%s%s%s%s%s", opr1->code, opr2->code, temp, " = ", opr1->var, operator, opr2->var);
+
+	return makeNode(temp, operator, code, opr1, opr2);
 }
 
-void writeC(t_compiler* compiler, char* str, int newline)
+Node* callStatement(char* procName, Node* exprList)
 {
-	debugInfo(str, log_id);
-	if (newline == 0)
-		fprintf(compiler->fout, "%s", str);
-	else
-		fprintf(compiler->fout, "%s\n", str);
+	return makeProcedureCall(procName, exprList);
+}
+
+void extendBranch(Node* branch, Node* statement, Node* bag)
+{
+	addToBranch(branch, statement, bag);
+}
+
+Node* whileStatement(Node* expr, Node* statements)
+{
+	char label1 [10]; genLabel(label1);
+	char label2 [10]; genLabel(label2);
+
+	return makeWhileNode(label1, label2, expr, statements);
+}
+
+Node* ifStatement(Node* expr, Node* ifBody, Node* elseBody)
+{
+	return makeIfElseNode(expr, ifBody, elseBody);
+}
+
+Node* assignStatement(char* var, Node* expr)
+{
+	char code [256];
+
+	//printf("%s\n", expr->code);
+	if (expr->code != "") strcat(expr->code, "\n");
+
+	snprintf(code, 256, "%s%s%s%s", expr->code, var, " = ", expr->var);
+
+	return makeNode(var, "=", code, expr, NULL);
+}
+
+Node* genProcedure(char* procName, Node* params, Node* statements)
+{
+	return makeProcedure(procName, "", "", params, statements);
+}
+
+void writeC(t_compiler* compiler, Node* node)
+{
+	// TODO optimizer kicks in here, AST ready, optimize away!
+	makeCode(compiler->fout_name, node);
+	dealloc(node);
 }
 

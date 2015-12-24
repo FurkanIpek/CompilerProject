@@ -1,6 +1,7 @@
 proc myProc (param1, param2)
 if (furkan == true) then begin 
-param1 = 5 + 6 + 7;
+param1 = 5 + 6 + 7 + param1;
+furkan = 40 + 70;
 end
 else begin
 param1 = 5 + 4;
@@ -9,4 +10,13 @@ endproc
 
 main
 myProc(param, maram);
+yankee(5, 5);
+
+while (bool == false)
+begin
+param = 7 + 6;
+damned_soul = param + 5;
+end
+
+myProc(damn);
 endmain

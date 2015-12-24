@@ -19,6 +19,9 @@ int main(int argc, char** argv)
 	else
 		usage();
 
+	//disableLogging(1); // logs from codegen
+	//disableLogging(2); // logs from tree
+
 	compiler = initializeCodeGenerator(input, output);
 
 	loadFile(compiler);

@@ -28,7 +28,7 @@ tNEWLINE \n
 tIDENT [_a-zA-Z][_a-zA-Z0-9]*
 
 %% 
-{tINT} { yylval.type.var = strdup(yytext); return tINT; }
+{tINT} { yylval.var = strdup(yytext); return tINT; }
 {tTRUE} { return tTRUE; }
 {tFALSE} { return tFALSE; }
 {tIF} { return tIF; }
@@ -48,7 +48,7 @@ tIDENT [_a-zA-Z][_a-zA-Z0-9]*
 {tISEQUAL} { return tISEQUAL; } 
 {tASSIGN} { return tASSIGN; } 
 {tSMALLER} { return tSMALLER; }
-{tIDENT} { yylval.type.var = strdup(yytext); return tIDENT; }
+{tIDENT} { yylval.var = strdup(yytext); return tIDENT; }
 {tNEWLINE} { ++yylineno; }
 [ ]+ 
 . { return yytext[0]; } 
