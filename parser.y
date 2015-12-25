@@ -28,8 +28,8 @@ Program: Procedures Main { $<node>$ = makeRoot($<node>1, $<node>2); writeC(compi
 	;
 
 Procedures
-	: Procedures Proc { $<node>$ = makeBranch(t_procList); extendBranch($<node>$, $<node>2, $<node>1); }
-	| { $<node>$ = makeBranch(t_procList); }
+	: Procedures Proc { $<node>$ = makeBranch(t_procList, getNumChildren($<node>1) + 1); extendBranch($<node>$, $<node>2, $<node>1); }
+	| { $<node>$ = makeBranch(t_procList, 0); }
 	;
 
 Proc
@@ -37,13 +37,13 @@ Proc
 	;
 
 Params
-	: tIDENT Params2 { $<node>$ = makeBranch(t_paramList); extendBranch($<node>$, genLeaf($<node>1, "", ""), $<node>2); }
+	: tIDENT Params2 { $<node>$ = makeBranch(t_paramList, getNumChildren($<node>2) + 1); extendBranch($<node>$, genLeaf($<node>1, "", ""), $<node>2); }
 	| { $<node>$ = NULL; }
 	;
 
 Params2
-	: ',' tIDENT Params2 { $<node>$ = makeBranch(t_paramList); extendBranch($<node>$, genLeaf($<node>2, "", ""), $<node>3); }
-	| { $<node>$ = makeBranch(t_paramList); }
+	: ',' tIDENT Params2 { $<node>$ = makeBranch(t_paramList, getNumChildren($<node>3) + 1); extendBranch($<node>$, genLeaf($<node>2, "", ""), $<node>3); }
+	| { $<node>$ = makeBranch(t_paramList, 0); }
 	;
 
 Main
@@ -55,8 +55,8 @@ StmtBlk
 	;
 
 StmtLst
-	: Stmt StmtLst { $<node>$ = makeBranch(t_stmtList); extendBranch($<node>$, $<node>1, $<node>2); }
-	| Stmt { $<node>$ = makeBranch(t_stmtList); extendBranch($<node>$, $<node>1, NULL); }
+	: Stmt StmtLst { $<node>$ = makeBranch(t_stmtList, getNumChildren($<node>2) + 1); extendBranch($<node>$, $<node>1, $<node>2); }
+	| Stmt { $<node>$ = makeBranch(t_stmtList, 1); extendBranch($<node>$, $<node>1, NULL); }
 	;
 
 Stmt
@@ -67,7 +67,7 @@ Stmt
 	;
 
 AsgnStmt // printf("debug: %i\n", ((Node*)$<node>3)->num_children);
-	: tIDENT tASSIGN Expr tSEMI { $<node>$ = assignStatement($<var>1, $<node>3);}
+	: tIDENT tASSIGN Expr tSEMI { $<node>$ = assignStatement($<var>1, $<node>3); }
 	;
 
 IfStmt
@@ -83,13 +83,13 @@ CallStmt
 	;
 
 ExprList
-	: Expr ExprList2 { $<node>$ = makeBranch(t_exprList); extendBranch($<node>$, $<node>1, $<node>2); }
+	: Expr ExprList2 { $<node>$ = makeBranch(t_exprList, getNumChildren($<node>2) + 1); extendBranch($<node>$, $<node>1, $<node>2); }
 	| { $<node>$ = NULL; }
 	;
 
 ExprList2
-	: ',' Expr ExprList2 { $<node>$ = makeBranch(t_exprList); extendBranch($<node>$, $<node>2, $<node>3); }
-	| { $<node>$ = makeBranch(t_exprList); }
+	: ',' Expr ExprList2 { $<node>$ = makeBranch(t_exprList, getNumChildren($<node>3) + 1); extendBranch($<node>$, $<node>2, $<node>3); }
+	| { $<node>$ = makeBranch(t_exprList, 0); }
 	;
 
 Expr

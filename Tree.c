@@ -16,13 +16,11 @@ void copyStrings(Node* node, char* var, char* label, char* code)
 
 void codeLeaf(Node* node)
 {
-	printf("code leaf\n");
 	fprintf(file, "%s", node->var);
 }
 
 void codeOperator(Node* node)
 {
-	printf("code operator\n");
 	/*if (node->children[1] == NULL)
 	{
 		fprintf(file, "%s = ", node->var);
@@ -40,7 +38,6 @@ void codeOperator(Node* node)
 
 void codeIfElse(Node* node)
 {
-	printf("code if else\n");
 	fprintf(file, "%s\nif %s", node->children[0]->code, node->children[0]->var);
 	fprintf(file, " GOTO %s", node->var);
 	generateCode(node->children[2]); // else body
@@ -51,7 +48,6 @@ void codeIfElse(Node* node)
 
 void codeWhile(Node* node)
 {
-	printf("code while\n");
 	fprintf(file, "%s: ", node->var); //1st label of while statement
 	generateCode(node->children[0]); // print exprs
 	fprintf(file, "\nif %s == false GOTO %s", node->children[0]->var, node->label);
@@ -63,7 +59,6 @@ void codeWhile(Node* node)
 void codeExprList(Node* node)
 {
 	int i;
-	printf("code expr list\n");
 	for (i = 0; i < node->num_children; i++)
 		fprintf(file, "param %s\n", node->children[i]->var);
 }
@@ -71,7 +66,6 @@ void codeExprList(Node* node)
 void codeStmtList(Node* node)
 {
 	int i;
-	printf("code stmt list\n");
 	for (i = 0; i < node->num_children; i++)
 		generateCode(node->children[i]);
 }
@@ -79,7 +73,6 @@ void codeStmtList(Node* node)
 void codeParamList(Node* node)
 {
 	int i;
-	printf("code param list\n");
 	for (i = 0; i < node->num_children; i++)
 		fprintf(file, " %s", node->children[i]->var);
 }
@@ -87,14 +80,12 @@ void codeParamList(Node* node)
 void codeProcList(Node* node)
 {
 	int i;
-	printf("code proc list\n");
 	for (i = 0; i < node->num_children; i++)
 		generateCode(node->children[i]);
 }
 
 void codeProcedure(Node* node)
 {
-	printf("code procedure\n");
 	fprintf(file, "%s:", node->var);
 	generateCode(node->children[0]); // TODO should program print formal parameters
 	generateCode(node->children[1]); // write function body
@@ -103,14 +94,12 @@ void codeProcedure(Node* node)
 
 void codeProcedureCall(Node* node)
 {
-	printf("code procedure call\n");
 	generateCode(node->children[0]); // print parameters to be passed on to function
 	fprintf(file, "call %s\n", node->var);	
 }
 
 void codeRoot(Node* node)
 {
-	printf("code root\n");
 	generateCode(node->children[0]); // proc list
 	fprintf(file, "\n-----------------\n\n"); // separate procedures and main to get a good look. coz, u know, looks matter :D
 	generateCode(node->children[1]); // main
@@ -118,7 +107,6 @@ void codeRoot(Node* node)
 
 void generateCode(Node* node)
 {
-	//printf("gen code\n");
 	switch (node->type)
 	{
 		case t_leaf: codeLeaf(node); break;
@@ -159,6 +147,7 @@ Node* makeLeaf(char* var, char* label, char* code)
 
 	copyStrings(node, var, label, code);
 
+	node->children = NULL;
 	node->num_children = 0;
 	node->type = t_leaf;
 
@@ -170,12 +159,18 @@ Node* makeNode(char* var, char* label, char* code, Node* opr1, Node* opr2)
 	Node* node = (Node*) malloc(sizeof(Node));
 
 	copyStrings(node, var, label, code);
-
-	node->children[0] = opr1, node->children[1] = opr2;
-	node->num_children = 2;
 	node->type = t_operator;
 
-	if (opr2 == NULL) node->num_children = 1; // assignment statements have only 1 child
+	if (opr2 != NULL) {
+		node->num_children = 2; // assignment statements have only 1 child
+		node->children = (Node**) malloc(node->num_children * sizeof(Node*));
+		node->children[0] = opr1, node->children[1] = opr2;
+	}
+	else {
+		node->num_children = 1; // assignment statements have only 1 child
+		node->children = (Node**) malloc(sizeof(Node*));
+		node->children[0] = opr1;
+	}
 
 	return node;
 }
@@ -187,8 +182,9 @@ Node* makeIfElseNode(Node* expr, Node* ifBody, Node* elseBody)
 
 	copyStrings(node, l1, l2, "");
 	
-	node->children[0] = expr, node->children[1] = ifBody, node->children[2] = elseBody;
 	node->num_children = 3;
+	node->children = (Node**) malloc(node->num_children * sizeof(Node*));
+	node->children[0] = expr, node->children[1] = ifBody, node->children[2] = elseBody;
 	node->type = t_ifElse;
 
 	return node;
@@ -197,23 +193,25 @@ Node* makeIfElseNode(Node* expr, Node* ifBody, Node* elseBody)
 Node* makeWhileNode(char* label1, char* label2, Node* expr, Node* statements)
 {
 	Node* node = (Node*) malloc(sizeof(Node));
-	// var = label1, label = label2 since we need to labels for each while statement
+	// var = label1, label = label2 since we need two labels for each while statement
 	copyStrings(node, label1, label2, "");
 
-	node->children[0] = expr, node->children[1] = statements;
 	node->num_children = 2;
+	node->children = (Node**) malloc(node->num_children * sizeof(Node*));
+	node->children[0] = expr, node->children[1] = statements;
 	node->type = t_while;
 
 	return node;
 }
 
-Node* makeBranch(Type type)
+Node* makeBranch(Type type, int size)
 {
 	Node* node = (Node*) malloc(sizeof(Node));
 
 	copyStrings(node, "", "", "");
 	node->type = type;
-	node->num_children = 0;
+	node->num_children = size;
+	node->children = (Node**) malloc(node->num_children * sizeof(Node*));
 
 	return node;
 }
@@ -221,13 +219,14 @@ Node* makeBranch(Type type)
 void addToBranch(Node* branch, Node* statement, Node* bag)
 {
 	int i;
-	branch->children[branch->num_children++] = statement;
-	
-	if (bag != NULL)
-		for (i = 0; i < bag->num_children; i++)
-			branch->children[branch->num_children++] = bag->children[i];
+	branch->children[0] = statement;
 
-	free(bag);
+	if (bag != NULL) {
+		for (i = 0; i < bag->num_children; i++)
+			branch->children[i+1] = bag->children[i];
+
+		free(bag);
+	}
 }
 
 Node* makeProcedure(char* var, char* label, char* code, Node* params, Node* statements)
@@ -236,8 +235,9 @@ Node* makeProcedure(char* var, char* label, char* code, Node* params, Node* stat
 
 	copyStrings(node, var, label, code);
 
-	node->children[0] = params, node->children[1] = statements;
 	node->num_children = 2;
+	node->children = (Node**) malloc(node->num_children * sizeof(Node*));
+	node->children[0] = params, node->children[1] = statements;
 	node->type = t_procedure;
 
 	return node;
@@ -248,10 +248,13 @@ Node* makeProcedureCall(char* procName, Node* exprList)
 	Node* node = (Node*) malloc(sizeof(Node));
 
 	copyStrings(node, procName, "", "");
-	// 1 child which holds expressions that are to be passed to function
-	node->children[0] = exprList;
+	
 	node->num_children = 1;
+	node->children = (Node**) malloc(node->num_children * sizeof(Node*));
+	node->children[0] = exprList;
 	node->type = t_procedureCall;
+
+	return node;
 }
 
 Node* makeRoot(Node* procList, Node* main)
@@ -260,12 +263,15 @@ Node* makeRoot(Node* procList, Node* main)
 
 	copyStrings(node, "", "", "");
 
-	node->children[0] = procList, node->children[1] = main;
 	node->num_children = 2;
+	node->children = (Node**) malloc(node->num_children * sizeof(Node*));
+	node->children[0] = procList, node->children[1] = main;
 	node->type = t_root;
 	
 	return node; 
 }
+
+int getNumChildren(Node* node) { return node->num_children; }
 
 void dealloc(Node* node)
 {
@@ -277,6 +283,7 @@ void dealloc(Node* node)
 			if (node->children[i] != NULL)
 				dealloc(node->children[i]);
 		
+		free(node->children);
 		free(node);
 	}
 }
