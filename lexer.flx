@@ -50,7 +50,7 @@ tIDENT [_a-zA-Z][_a-zA-Z0-9]*
 {tSMALLER} { return tSMALLER; }
 {tIDENT} { yylval.var = strdup(yytext); return tIDENT; }
 {tNEWLINE} { ++yylineno; }
-[ ]+ 
+[ \t]+ 
 . { return yytext[0]; } 
 %%
 

@@ -1,9 +1,11 @@
-FILES	= Lexer.c Parser.c CodeGen.c Tree.c main.c
-CC	= gcc
-CFLAGS	= 
+dependencies = Lexer.c Parser.c CodeGen.c CodeGen.h Tree.c Tree.h main.c
+files = Lexer.c Parser.c CodeGen.c Tree.c main.c
+main_cmd = gcc
+flags =
+exe_name = -o pl4 
 
-pl4:	$(FILES)
-		$(CC) $(CFLAGS) $(FILES) -o pl4
+$(exe_name):	$(dependencies)
+		$(main_cmd) $(flags) $(files) $(exe_name)
 
 Lexer.c:	lexer.flx 
 		flex lexer.flx

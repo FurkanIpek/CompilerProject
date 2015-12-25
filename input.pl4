@@ -1,11 +1,16 @@
 proc myProc (param1, param2)
-if (furkan == true) then begin 
+bool = algebra == false;
+if (dogru == bool) then begin 
 param1 = 5 + 6 + 7 + param1;
 furkan = 40 + 70;
 end
 else begin
 param1 = 5 + 4;
 end
+endproc
+
+proc someProc (param1, param2)
+param1 = param2 + 5;
 endproc
 
 main
@@ -15,8 +20,8 @@ yankee(5, 5);
 while (bool == false)
 begin
 param = 7 + 6;
-damned_soul = param + 5;
+damn = param + 5;
 end
 
-myProc(damn);
+someProc(damn, param);
 endmain

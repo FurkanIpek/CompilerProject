@@ -33,27 +33,27 @@ void codeOperator(Node* node)
 		fprintf(file, " %s ", node->label);
 		generateCode(node->children[1]);
 	}*/
-	fprintf(file, "%s", node->code);
+	fprintf(file, "%s\n", node->code);
 }
 
 void codeIfElse(Node* node)
 {
 	fprintf(file, "%s\nif %s", node->children[0]->code, node->children[0]->var);
-	fprintf(file, " GOTO %s", node->var);
+	fprintf(file, " GOTO %s\n", node->var);
 	generateCode(node->children[2]); // else body
-	fprintf(file, "\nGOTO %s\n%s: ", node->label, node->var);
+	fprintf(file, "GOTO %s\n%s: ", node->label, node->var);
 	generateCode(node->children[1]); // if body
-	fprintf(file, "\n%s: ", node->label);
+	fprintf(file, "%s: ", node->label);
 }
 
 void codeWhile(Node* node)
 {
 	fprintf(file, "%s: ", node->var); //1st label of while statement
 	generateCode(node->children[0]); // print exprs
-	fprintf(file, "\nif %s == false GOTO %s", node->children[0]->var, node->label);
+	fprintf(file, "if %s == false GOTO %s\n", node->children[0]->var, node->label);
 	generateCode(node->children[1]); // print while body
-	fprintf(file, "\nGOTO %s\n", node->var);
-	fprintf(file, "%s:", node->label);
+	fprintf(file, "GOTO %s\n", node->var);
+	fprintf(file, "%s: ", node->label);
 }
 
 void codeExprList(Node* node)
@@ -75,13 +75,16 @@ void codeParamList(Node* node)
 	int i;
 	for (i = 0; i < node->num_children; i++)
 		fprintf(file, " %s", node->children[i]->var);
+	fprintf(file, "\n");
 }
 
 void codeProcList(Node* node)
 {
 	int i;
-	for (i = 0; i < node->num_children; i++)
+	for (i = 0; i < node->num_children; i++) {
 		generateCode(node->children[i]);
+		fprintf(file, "\n");
+	}
 }
 
 void codeProcedure(Node* node)
@@ -101,7 +104,6 @@ void codeProcedureCall(Node* node)
 void codeRoot(Node* node)
 {
 	generateCode(node->children[0]); // proc list
-	fprintf(file, "\n-----------------\n\n"); // separate procedures and main to get a good look. coz, u know, looks matter :D
 	generateCode(node->children[1]); // main
 }
 
@@ -139,6 +141,8 @@ void makeCode(char* fileName, Node* node)
 	
 	if (file != NULL) 
 		generateCode(node);
+
+	fclose(file);
 }
 
 Node* makeLeaf(char* var, char* label, char* code)
@@ -157,7 +161,7 @@ Node* makeLeaf(char* var, char* label, char* code)
 Node* makeNode(char* var, char* label, char* code, Node* opr1, Node* opr2)
 {
 	Node* node = (Node*) malloc(sizeof(Node));
-
+	
 	copyStrings(node, var, label, code);
 	node->type = t_operator;
 
@@ -283,7 +287,6 @@ void dealloc(Node* node)
 			if (node->children[i] != NULL)
 				dealloc(node->children[i]);
 		
-		free(node->children);
 		free(node);
 	}
 }
