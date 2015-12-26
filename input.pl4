@@ -1,27 +1,34 @@
 proc myProc (param1, param2)
 bool = algebra == false;
-if (dogru == bool) then begin 
-param1 = 5 + 6 + 7 + param1;
-furkan = 40 + 70;
+if (dogru == bool) then begin
+param1 = 5 + 6 + 7;
+param2 = 40 + 70;
 end
 else begin
 param1 = 5 + 4;
 end
+someProc();
 endproc
 
-proc someProc (param1, param2)
-param1 = param2 + 5;
+proc someProc ()
+formal1 = formal2 + 5;
+endproc
+
+proc myProc (formal1)
+formal1 = formal2 + 5;
 endproc
 
 main
-myProc(param, maram);
-yankee(5, 5);
-
+myProc(one);
 while (bool == false)
 begin
-param = 7 + 6;
-damn = param + 5;
+fp1 = 7 + 6;
+if (fp1 < 15) then begin
+fp1 = fp1 * 1;
 end
-
-someProc(damn, param);
+else begin
+fp2 = fp2 + 1;
+end
+damn = fp1 + 5;
+end
 endmain

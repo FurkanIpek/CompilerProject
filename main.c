@@ -11,23 +11,29 @@ int main(int argc, char** argv)
 {
 	char* input = "input.pl4", * output = "output.tac";
 	
-	if (argc >= 3) {
+	if (argc >= 3)
+	{
 		input = argv[1];
 		output = argv[2];
+		
+		compiler = initializeCodeGenerator(input, output);
+
+		loadFile(compiler);
+
+		if (parse(compiler) == 1)
+		{
+			printf("Intermediate code generation finished succesfully.\n");
+			freeCodeGenerator(compiler);
+			
+			return EXIT_SUCCESS;
+		}
+
+		freeCodeGenerator(compiler);
 	}
 	else {
 		usage();
 	}
-
-	compiler = initializeCodeGenerator(input, output);
-
-	loadFile(compiler);
-
-	if (parse(compiler) == 1)
-		printf("Parsing finished succesfully.\n");
-
-	freeCodeGenerator(compiler);
 		
-	return 0;
+	return EXIT_FAILURE;
 }
 

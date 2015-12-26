@@ -50,24 +50,30 @@ typedef struct Node {
 	char* var, * label, * code;
 	// see enum definitions
 	Type type;
+	// line number in the input file
+	int line_no;
 } Node;
 
-// Generate a txt file out of AST
+// Generate a TAC file out of AST
 void makeCode(char* fileName, Node* node);
 // get number of children a node has
 int getNumChildren(Node* node);
 // free the memory
 void dealloc(Node* node);
+// check if procedure definitions and procedure calls are valid
+int checkProcedureValidity(Node* root); // send the root node
+// check whether procedures are used within the code
+void procCallWarnings(Node* root);
 
 /**********\\ Generate tree parts //**********/
-Node* makeLeaf(char* var, char* label, char* code);
-Node* makeNode(char* var, char* label, char* code, Node* opr1, Node* opr2);
-Node* makeIfElseNode(Node* expr, Node* ifBody, Node* elseBody);
-Node* makeWhileNode(char* label1, char* label2, Node* expr, Node* statements);
-Node* makeBranch(Type type, int size);
+Node* makeLeaf(int lineno, char* var, char* label, char* code);
+Node* makeNode(int lineno, char* var, char* label, char* code, Node* opr1, Node* opr2);
+Node* makeIfElseNode(int lineno, Node* expr, Node* ifBody, Node* elseBody);
+Node* makeWhileNode(int lineno, char* label1, char* label2, Node* expr, Node* statements);
+Node* makeBranch(int lineno, Type type, int size);
 void addToBranch(Node* branch, Node* statement, Node* bag);
-Node* makeProcedureCall(char* procName, Node* exprList);
-Node* makeProcedure(char* var, char* label, char* code, Node* params, Node* statements);
-Node* makeRoot(Node* procList, Node* main);
+Node* makeProcedureCall(int lineno, char* procName, Node* exprList);
+Node* makeProcedure(int lineno, char* var, char* label, char* code, Node* params, Node* statements);
+Node* makeRoot(int lineno, Node* procList, Node* main);
 /*********************************************/ 
 
